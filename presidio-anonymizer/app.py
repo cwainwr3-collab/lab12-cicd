@@ -94,7 +94,7 @@ class Server:
         @self.app.route("/deanonymizers", methods=["GET"])
         def deanonymizers():
             """Return a list of supported deanonymizers."""
-            return jsonify(self.deanonymize.get_deanonymizers())  
+            return jsonify(self.deanonymize.get_deanonymizers())
         @self.app.route("/genz-preview", methods=["GET"])
         def genzpreview():
             """Return example Gen-Z anonymization output."""
