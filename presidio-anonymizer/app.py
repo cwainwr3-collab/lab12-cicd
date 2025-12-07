@@ -1,5 +1,6 @@
 """REST API server for anonymizer."""
 
+import json
 import logging
 import os
 from logging.config import fileConfig
@@ -10,6 +11,7 @@ from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine, OperatorCon
 from presidio_anonymizer.entities import InvalidParamError
 from presidio_anonymizer.services.app_entities_convertor import AppEntitiesConvertor
 from werkzeug.exceptions import BadRequest, HTTPException
+import urllib.parse
 
 DEFAULT_PORT = "3000"
 
@@ -107,16 +109,29 @@ class Server:
 
         @self.app.route("/genz", methods=["GET"])
         def genz():
-            content = {
-                "text": "Please contact Emily Carter at 734-555-9284 if you have "
-                "questions about the workshop registration.",
-                "analyzer_results": [
-                    {"start": 15, "end": 27, "score": 0.3,
-                    "entity_type": "PERSON"},
-                    {"start": 31, "end": 43, "score": 0.95,
-                    "entity_type": "PHONE_NUMBER"},
-                ]
-            }
+            # Get data from query parameter (GET requests use query params, not body)
+            encoded_data = request.args.get('data')
+
+            if not encoded_data:
+                raise BadRequest("Missing data parameter")
+
+            try:
+                # URL decode the parameter value
+                decoded_data = urllib.parse.unquote(encoded_data)
+
+                #Parse the JSON string
+                content = json.loads(decoded_data)
+
+                #Validate required fields
+                if 'text' not in content or 'analyzer_results' not in content:
+                    raise BadRequest("Missing required fields: 'text' and/or 'analyzer_results'")
+
+            #REMOVE THIS LINE: content = request.get_json()  # GET requests don't have JSON body!
+            except json.JSONDecodeError as e:
+                raise BadRequest(f"Invalid JSON: {str(e)}")
+            except Exception as e:
+                raise BadRequest(f"Error processing request: {str(e)}")
+
             analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
                 content["analyzer_results"]
             )
