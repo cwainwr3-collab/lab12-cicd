@@ -6,12 +6,11 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
-from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine
+from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine, OperatorConfig
 from presidio_anonymizer.entities import InvalidParamError
 from presidio_anonymizer.services.app_entities_convertor import AppEntitiesConvertor
 from werkzeug.exceptions import BadRequest, HTTPException
-from presidio_anonymizer.operators.genz import GenZ
-from presidio_anonymizer import OperatorConfig
+
 
 DEFAULT_PORT = "3000"
 
@@ -97,7 +96,7 @@ class Server:
         def deanonymizers():
             """Return a list of supported deanonymizers."""
             return jsonify(self.deanonymize.get_deanonymizers())
-        
+
         @self.app.route("/genz-preview", methods=["GET"])
         def genzpreview():
             """Return example Gen-Z anonymization output."""
@@ -106,14 +105,17 @@ class Server:
                 "example output": "Call GOAT at vibe check",
                 "description": "Example output of the genz anonymizer."
             })
-        
+
         @self.app.route("/genz", methods=["GET"])
         def genz():
             content = {
-                "text": "Please contact Emily Carter at 734-555-9284 if you have questions about the workshop registration.",
+                "text": "Please contact Emily Carter at 734-555-9284 if you have "
+                "questions about the workshop registration.",
                 "analyzer_results": [
-                    {"start": 15, "end": 27, "score": 0.3, "entity_type": "PERSON"},
-                    {"start": 31, "end": 43, "score": 0.95, "entity_type": "PHONE_NUMBER"},
+                    {"start": 15, "end": 27, "score": 0.3,
+                    "entity_type": "PERSON"},
+                    {"start": 31, "end": 43, "score": 0.95, 
+                    "entity_type": "PHONE_NUMBER"},
                 ]
             }
             analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
