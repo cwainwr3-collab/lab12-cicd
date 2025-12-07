@@ -3,7 +3,7 @@ import json
 import pytest
 
 from common.assertions import equal_json_strings
-from common.methods import anonymize, anonymizers, deanonymize
+from common.methods import anonymize, anonymizers, deanonymize, genz
 
 
 @pytest.mark.api
@@ -401,3 +401,52 @@ def test_overlapping_keep_both():
 
     assert response_status == 200
     assert equal_json_strings(expected_response, response_content)
+
+@pytest.mark.api
+def test_given_anonymize_called_with_genz_then_expected_valid_response_returned():
+    request_body = {
+        "text": "Please contact Emily Carter at 734-555-9284 if you have "
+                "questions about the workshop registration.",
+        "analyzer_results": [
+            {"start": 15, "end": 27, "score": 0.3, "entity_type": "PERSON"},
+            {"start": 31, "end": 43, "score": 0.95, "entity_type": "PHONE_NUMBER"}
+        ]
+    }
+
+    response_status, response_content = genz(request_body)
+
+    print(f"DEBUG: Response status: {response_status}")
+    if response_status != 200:
+        print(f"DEBUG: Error response: {response_content}")
+        if isinstance(response_content, bytes):
+            try:
+                print(f"DEBUG: Error decoded: {response_content.decode('utf-8')}")
+            except:
+                pass
+    #asserting response as suggested
+    assert response_status == 200
+    #parsing response to json in order to read it bellow
+    response_json = json.loads(response_content)
+    #imperfect solution, but other tests will check that most values are equal to expected values
+    #overall structure first
+    assert "text" in response_json
+    assert "items" in response_json
+    assert isinstance(response_json["items"], list)
+    #making sure data was anoymized
+    assert "Emily Carter" not in response_json['text']
+    assert "734-555-9284" not in response_json['text']
+    #loop tests specific values in items list
+    for item in response_json["items"]:
+        assert "start" in item
+        assert "end" in item
+        assert "entity_type" in item
+        assert "text" in item
+        assert "operator" in item
+        assert item["operator"] =="genz"
+    #checking that at least one of each expected anoymizer terms are present
+    valid_people = ["bestie", "pookie", "queen", "GOAT", "baddie", "mc",
+            "slay", "based", "gagged", "snatched"]
+    assert any(people in response_json["text"] for people in valid_people)
+    valid_number = ["fr fr", "bruh", "oop—", "big yikes", "vibe check"]
+    assert any(number in response_json["text"] for number in valid_number)
+    ##I believe this covers all bases? 
