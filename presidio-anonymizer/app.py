@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import urllib.parse
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -11,7 +12,6 @@ from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine, OperatorCon
 from presidio_anonymizer.entities import InvalidParamError
 from presidio_anonymizer.services.app_entities_convertor import AppEntitiesConvertor
 from werkzeug.exceptions import BadRequest, HTTPException
-import urllib.parse
 
 DEFAULT_PORT = "3000"
 
@@ -124,9 +124,9 @@ class Server:
 
                 #Validate required fields
                 if 'text' not in content or 'analyzer_results' not in content:
-                    raise BadRequest("Missing required fields: 'text' and/or 'analyzer_results'")
+                    raise BadRequest("Missing required fields: 'text' and/or " \
+                    "'analyzer_results'")
 
-            #REMOVE THIS LINE: content = request.get_json()  # GET requests don't have JSON body!
             except json.JSONDecodeError as e:
                 raise BadRequest(f"Invalid JSON: {str(e)}")
             except Exception as e:
