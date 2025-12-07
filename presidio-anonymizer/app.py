@@ -2,8 +2,8 @@
 
 import logging
 import os
-from logging.config import fileConfig
 from pathlib import Path
+from logging.config import fileConfig
 
 from flask import Flask, Response, jsonify, request
 from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine, OperatorConfig
@@ -114,7 +114,7 @@ class Server:
                 "analyzer_results": [
                     {"start": 15, "end": 27, "score": 0.3,
                     "entity_type": "PERSON"},
-                    {"start": 31, "end": 43, "score": 0.95, 
+                    {"start": 31, "end": 43, "score": 0.95,
                     "entity_type": "PHONE_NUMBER"},
                 ]
             }
