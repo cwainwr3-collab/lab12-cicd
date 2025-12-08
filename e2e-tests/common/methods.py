@@ -4,6 +4,8 @@ import os
 
 import requests
 
+import urllib.parse
+
 from common.constants import (
     ANONYMIZER_BASE_URL,
 )
@@ -48,3 +50,17 @@ def __get_multipart_form_data(file):
             "image": (file.name, file, "multipart/form-data"),
         }
     return multipart_form_data
+
+def genz(data):
+    json_str = json.dumps(data)
+    response = requests.get(
+        f"{ANONYMIZER_BASE_URL}/genz",
+        params={'data': json_str},  # requests will encode this
+        headers=DEFAULT_HEADERS
+    )
+
+    print(f"DEBUG: Full URL sent: {response.url}")
+    print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: Response text: {response.text[:500] if response.text else 'Empty'}")
+
+    return response.status_code, response.content

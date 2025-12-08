@@ -66,3 +66,12 @@ line-ending = "auto"
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.poetry]
+name = "my-project"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+pytest = "^9.0.2"
+requests = "^2.32.5"

@@ -1,12 +1,14 @@
 """REST API server for anonymizer."""
 
+import json
 import logging
 import os
+import urllib.parse
 from logging.config import fileConfig
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, request
-from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine
+from presidio_anonymizer import AnonymizerEngine, DeanonymizeEngine, OperatorConfig
 from presidio_anonymizer.entities import InvalidParamError
 from presidio_anonymizer.services.app_entities_convertor import AppEntitiesConvertor
 from werkzeug.exceptions import BadRequest, HTTPException
@@ -95,6 +97,55 @@ class Server:
         def deanonymizers():
             """Return a list of supported deanonymizers."""
             return jsonify(self.deanonymize.get_deanonymizers())
+
+        @self.app.route("/genz-preview", methods=["GET"])
+        def genzpreview():
+            """Return example Gen-Z anonymization output."""
+            return jsonify({
+                "example": "Call Emily at 577-988-1234",
+                "example output": "Call GOAT at vibe check",
+                "description": "Example output of the genz anonymizer."
+            })
+
+        @self.app.route("/genz", methods=["GET"])
+        def genz():
+            # Get data from query parameter (GET requests use query params, not body)
+            encoded_data = request.args.get('data')
+
+            if not encoded_data:
+                raise BadRequest("Missing data parameter")
+
+            try:
+                # URL decode the parameter value
+                decoded_data = urllib.parse.unquote(encoded_data)
+
+                #Parse the JSON string
+                content = json.loads(decoded_data)
+
+                #Validate required fields
+                if 'text' not in content or 'analyzer_results' not in content:
+                    raise BadRequest("Missing required fields: 'text' and/or " \
+                    "'analyzer_results'")
+
+            except json.JSONDecodeError as e:
+                raise BadRequest(f"Invalid JSON: {str(e)}")
+            except Exception as e:
+                raise BadRequest(f"Error processing request: {str(e)}")
+
+            analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
+                content["analyzer_results"]
+            )
+            operators = {
+                "PERSON": OperatorConfig("genz"),
+                "PHONE_NUMBER": OperatorConfig("genz"),
+                "DEFAULT": OperatorConfig("genz")
+            }
+            result = self.anonymizer.anonymize(
+                text=content["text"],
+                analyzer_results=analyzer_results,
+                operators=operators,
+            )
+            return result.to_json()
 
         @self.app.errorhandler(InvalidParamError)
         def invalid_param(err):
