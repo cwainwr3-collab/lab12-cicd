@@ -1,9 +1,7 @@
 """REST API server for anonymizer."""
 
-import json
 import logging
 import os
-import urllib.parse
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -117,8 +115,9 @@ class Server:
 
             # Validate required fields
             if "text" not in content or "analyzer_results" not in content:
-                raise BadRequest("Missing required fields: 'text' and/or 'analyzer_results'")
-            
+                raise BadRequest("Missing required fields: 'text' and/or " \
+                "'analyzer_results'")
+
             analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
                 content["analyzer_results"]
             )
