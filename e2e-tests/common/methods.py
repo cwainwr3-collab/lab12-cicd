@@ -52,15 +52,14 @@ def __get_multipart_form_data(file):
     return multipart_form_data
 
 def genz(data):
-    json_str = json.dumps(data)
-    response = requests.get(
+    response = requests.post(
         f"{ANONYMIZER_BASE_URL}/genz",
-        params={'data': json_str},  # requests will encode this
+        json=data,                     # <-- sends JSON body (correct)
         headers=DEFAULT_HEADERS
     )
 
-    print(f"DEBUG: Full URL sent: {response.url}")
-    print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: POST URL: {response.url}")
+    print(f"DEBUG: Status: {response.status_code}")
     print(f"DEBUG: Response text: {response.text[:500] if response.text else 'Empty'}")
 
     return response.status_code, response.content

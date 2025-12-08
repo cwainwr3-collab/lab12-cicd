@@ -107,31 +107,18 @@ class Server:
                 "description": "Example output of the genz anonymizer."
             })
 
-        @self.app.route("/genz", methods=["GET"])
+        @self.app.route("/genz", methods=["POST"])
         def genz():
-            # Get data from query parameter (GET requests use query params, not body)
-            encoded_data = request.args.get('data')
+            # Read JSON directly from the request body
+            content = request.get_json(silent=True)
 
-            if not encoded_data:
-                raise BadRequest("Missing data parameter")
+            if content is None:
+                raise BadRequest("Invalid or missing JSON body")
 
-            try:
-                # URL decode the parameter value
-                decoded_data = urllib.parse.unquote(encoded_data)
-
-                #Parse the JSON string
-                content = json.loads(decoded_data)
-
-                #Validate required fields
-                if 'text' not in content or 'analyzer_results' not in content:
-                    raise BadRequest("Missing required fields: 'text' and/or " \
-                    "'analyzer_results'")
-
-            except json.JSONDecodeError as e:
-                raise BadRequest(f"Invalid JSON: {str(e)}")
-            except Exception as e:
-                raise BadRequest(f"Error processing request: {str(e)}")
-
+            # Validate required fields
+            if "text" not in content or "analyzer_results" not in content:
+                raise BadRequest("Missing required fields: 'text' and/or 'analyzer_results'")
+            
             analyzer_results = AppEntitiesConvertor.analyzer_results_from_json(
                 content["analyzer_results"]
             )
